@@ -4,10 +4,10 @@
 import * as React from 'react'
 
 function Greeting() {
-const [name, setName] = React.useState('');
+  const [name, setName] = React.useState('')
 
   function handleChange(event) {
-   setName(event.target.value)
+    setName(event.target.value)
   }
 
   return (
