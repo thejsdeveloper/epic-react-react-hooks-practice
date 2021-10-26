@@ -3,19 +3,39 @@
 
 import * as React from 'react'
 
-const useLocalStorageState = (key, initialValue) => {
-  const [value, setValue] = React.useState(
-    () => localStorage.getItem(key) || initialValue,
-  )
+const useLocalStorageState = (
+  key,
+  defaultValue,
+  {serialize = JSON.stringify, deSerialize = JSON.parse} = {},
+) => {
+  const [value, setValue] = React.useState(() => {
+    const storedValue = localStorage.getItem(key)
+
+    if (storedValue) {
+      try {
+        return deSerialize(storedValue)
+      } catch (e) {
+        localStorage.removeItem(key)
+      }
+    }
+    return typeof defaultValue === 'function' ? defaultValue() : defaultValue
+  })
+
+  const prevKeyRef = React.useRef(key)
 
   React.useEffect(() => {
-    localStorage.setItem(key, value)
-  }, [value, key])
+    const prevKey = prevKeyRef.current
+    if (prevKey !== key) {
+      localStorage.removeItem(prevKey)
+    }
+    prevKeyRef.current = key
+    localStorage.setItem(key, serialize(value))
+  }, [key, value, serialize])
 
   return [value, setValue]
 }
 function Greeting({initialName = ''}) {
-  const [name, setName] = useLocalStorageState(initialName)
+  const [name, setName] = useLocalStorageState('name', initialName)
 
   function handleChange(event) {
     setName(event.target.value)
