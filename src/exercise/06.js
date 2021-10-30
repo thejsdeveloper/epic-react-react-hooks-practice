@@ -8,6 +8,7 @@ import {PokemonForm} from '../pokemon'
 function PokemonInfo({pokemonName}) {
   const [pokemon, setPokemon] = React.useState(null)
   const [error, setError] = React.useState(null)
+  const [status, setStatus] = React.useState('idle')
 
   React.useEffect(() => {
     if (!pokemonName) {
@@ -16,10 +17,13 @@ function PokemonInfo({pokemonName}) {
 
     const getPokemon = async () => {
       try {
+        setStatus('pending')
         const pokemon = await fetchPokemon(pokemonName)
         setPokemon(pokemon)
+        setStatus('resolved')
       } catch (e) {
         setError(e)
+        setStatus('rejected')
       }
     }
     setError(null)
@@ -27,7 +31,7 @@ function PokemonInfo({pokemonName}) {
     getPokemon()
   }, [pokemonName])
 
-  if (error) {
+  if (status === 'rejected') {
     return (
       <div role="alert">
         There was an error:{' '}
@@ -36,15 +40,19 @@ function PokemonInfo({pokemonName}) {
     )
   }
 
-  if (!pokemonName) {
+  if (status === 'idle') {
     return 'Submit a pokemon'
   }
 
-  if (!pokemon) {
+  if (status === 'pending') {
     return <PokemonInfoFallback name={pokemonName} />
   }
 
-  return <PokemonDataView pokemon={pokemon} />
+  if (status === 'resolved') {
+    return <PokemonDataView pokemon={pokemon} />
+  }
+
+  return new Error()
 }
 
 function App() {
